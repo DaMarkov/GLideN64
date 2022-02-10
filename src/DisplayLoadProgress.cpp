@@ -11,6 +11,7 @@
 
 void displayLoadProgress(const wchar_t *format, ...)
 {
+#ifndef NO_LOAD_PROGRESS_DISPLAY
 	va_list args;
 	wchar_t wbuf[INFO_BUF];
 	char buf[INFO_BUF];
@@ -46,4 +47,5 @@ void displayLoadProgress(const wchar_t *format, ...)
 
 	if (pBuffer != nullptr)
 		gfxContext.bindFramebuffer(graphics::bufferTarget::DRAW_FRAMEBUFFER, pBuffer->m_FBO);
+#endif
 }

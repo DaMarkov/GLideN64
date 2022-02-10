@@ -15,7 +15,8 @@
 #define START_WIDTH 1280
 #define START_HEIGHT 720
 
-static u64 g_width  = START_WIDTH;
+static u64 g_originalWidth = START_WIDTH;//Size set by the end-user
+static u64 g_width  = START_WIDTH;//Current size
 static u64 g_height = START_HEIGHT;
 
 extern "C" {
@@ -92,9 +93,11 @@ N64Regs::~N64Regs() {
 
 extern "C"
 {
+    //Called when the end-user changes the window size
     void gfx_resize(long width, long height)
     {
-        g_width = width;
+        g_originalWidth = width;
+        g_width  = width;
         g_height = height;
         config.video.windowedWidth  = g_width;
         config.video.windowedHeight = g_height;
@@ -131,6 +134,23 @@ extern "C" {
         RDRAMSize = (word)-1;
 
         api().RomOpen(romName);
+    }
+
+    void gfx_force_43(bool enable) {
+        const u32 newAspectRatio = enable ? 1 : 3;
+
+        if (config.frameBufferEmulation.aspect == newAspectRatio)
+            return;//Already set
+
+        config.frameBufferEmulation.aspect = enable ? 1 : 3;
+        dwnd().forceResizeWindow();//Inform GLideN64 about the change
+
+        //Calculate new width
+        auto newWidth = g_originalWidth;
+        if (enable)
+            newWidth = (g_height * 4) / 3;
+
+        g_width = newWidth;
     }
 
     void gfx_shutdown() {

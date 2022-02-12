@@ -238,6 +238,7 @@ struct gDPInfo
 	{
 		u32 format, size, width, bpl;
 		word address;
+		word address_original;
 	} textureImage;
 
 	struct

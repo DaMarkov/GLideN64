@@ -916,6 +916,12 @@ void TextureCache::_loadBackground(CachedTexture *pTexture)
 	free(pDest);
 }
 
+
+uint16_t my_byteswap16(uint16_t num)//!!
+{
+	return (num << 8) | (num >> 8);
+}
+
 bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & _ricecrc)
 {
 	if (config.textureFilter.txHiresEnable == 0 || !TFH.isInited())
@@ -976,7 +982,7 @@ bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & 
 	u16 * palette = nullptr;
 	if ((_pTexture->size < G_IM_SIZ_16b) && (gDP.otherMode.textureLUT != G_TT_NONE || _pTexture->format == G_IM_FMT_CI)) {
 		if (_pTexture->size == G_IM_SIZ_8b)
-			paladdr = (u8*)(gDP.TexFilterPalette);
+			paladdr = (u8*)(gDP.TexFilterPalette);//!!
 		else if (config.textureFilter.txHresAltCRC)
 			paladdr = (u8*)(gDP.TexFilterPalette + (_pTexture->palette << 5));
 		else
@@ -985,10 +991,10 @@ bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & 
 		//			palette = (rdp.pal_8 + (gSP.textureTile[_t]->palette << 4));
 	}
 
-	_ricecrc = txfilter_checksum(addr, width, height, (unsigned short)(_pTexture->format << 8 | _pTexture->size), bpl, paladdr);
+	_ricecrc = txfilter_checksum(addr, width, height, (unsigned short)(_pTexture->format << 8 | _pTexture->size), bpl, paladdr);//!!
 	GHQTexInfo ghqTexInfo;
 	// TODO: fix problem with zero texture dimensions on GLideNHQ side.
-	if (txfilter_hirestex(_pTexture->crc, _ricecrc, palette, &ghqTexInfo) &&
+	if (txfilter_hirestex(_pTexture->crc, _ricecrc, palette, &ghqTexInfo) &&//!!
 		ghqTexInfo.width != 0 && ghqTexInfo.height != 0) {
 		ghqTexInfo.format = gfxContext.convertInternalTextureFormat(ghqTexInfo.format);
 		Context::InitTextureParams params;
@@ -1007,6 +1013,8 @@ bool TextureCache::_loadHiresTexture(u32 _tile, CachedTexture *_pTexture, u64 & 
 		_updateCachedTexture(ghqTexInfo, _pTexture, width, height);
 		return true;
 	}
+
+	//_ricecrc = txfilter_checksum(addr, width, height, (unsigned short)(_pTexture->format << 8 | _pTexture->size), bpl, paladdr);//!!
 
 	return false;
 }

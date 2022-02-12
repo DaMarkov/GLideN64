@@ -190,18 +190,22 @@ void gDPSetColorImage( u32 format, u32 size, u32 width, word address )
 #endif
 }
 
+#define RSP_N64_SegmentToPhysical( segaddr ) ((gSP.segment[(segaddr >> 24) & 0x0F] + (segaddr & RDRAMSize)) & RDRAMSize)
+
 void gDPSetTextureImage(u32 format, u32 size, u32 width, word address)
 {
 	gDP.textureImage.format = format;
 	gDP.textureImage.size = size;
 	gDP.textureImage.width = width;
 	gDP.textureImage.address = RSP_SegmentToPhysical(address);
+	gDP.textureImage.address_original = RSP_N64_SegmentToPhysical(address);//!!!!
 	gDP.textureImage.bpl = gDP.textureImage.width << gDP.textureImage.size >> 1;
 	if (gSP.DMAOffsets.tex_offset != 0) {
 		if (format == G_IM_FMT_RGBA) {
 			u16 * t = reinterpret_cast<u16*>(RDRAM + gSP.DMAOffsets.tex_offset);
 			gSP.DMAOffsets.tex_shift = t[gSP.DMAOffsets.tex_count ^ 1];
 			gDP.textureImage.address += gSP.DMAOffsets.tex_shift;
+			gDP.textureImage.address_original += gSP.DMAOffsets.tex_shift;//!!!!
 		} else {
 			gSP.DMAOffsets.tex_offset = 0;
 			gSP.DMAOffsets.tex_shift = 0;
@@ -752,6 +756,21 @@ void gDPLoadBlock(u32 tile, u32 uls, u32 ult, u32 lrs, u32 dxt)
 	DebugMsg( DEBUG_NORMAL, "gDPLoadBlock( %i, %i, %i, %i, %i );\n", tile, uls, ult, lrs, dxt );
 }
 
+uint16_t my_byteswap16(uint16_t num);//!!
+uint32_t my_byteswap32(uint32_t num);//!!
+
+uint64_t my_byteswap64(uint64_t val)//!!
+{
+	return ((((val) & 0xff00000000000000ull) >> 56) |
+		(((val) & 0x00ff000000000000ull) >> 40) |
+		(((val) & 0x0000ff0000000000ull) >> 24) |
+		(((val) & 0x000000ff00000000ull) >> 8) |
+		(((val) & 0x00000000ff000000ull) << 8) |
+		(((val) & 0x0000000000ff0000ull) << 24) |
+		(((val) & 0x000000000000ff00ull) << 40) |
+		(((val) & 0x00000000000000ffull) << 56));
+}
+
 void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 {
 	gDPSetTileSize( tile, uls, ult, lrs, lrt );
@@ -765,6 +784,13 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 	u16 * dest = reinterpret_cast<u16*>(TMEM);
 	u32 destIdx = gDP.tiles[tile].tmem << 2;
 
+
+
+	u32 org_count = 16;
+
+	
+
+
 	int i = 0;
 	while (i < count) {
 		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
@@ -774,11 +800,51 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 #else
 			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ 2)));
 #endif
+			dest[(destIdx) & 0x07FF] = 0xFFFF;//!!!
 			address += 2;
 			destIdx += 4;
 		}
 
+		
+		u32* p32 = (u32*)&TMEM[256 + (pal << 4)];
+		for (u32 k = 0; k < org_count / 4; k++)
+		{
+			*p32 = my_byteswap32(*p32);
+			p32++;
+		}
+
+		
+		/*u64* p64 = (u64*)&TMEM[256 + (pal << 4)];
+		for (u32 i = 0; i < org_count / 8; i++)
+		{
+			*p64 = my_byteswap64(*p64);
+			p64++;
+		}*/
+
+		
+
+		/*u16* p16 = (u16*)&TMEM[256 + (pal << 4)];
+		for (u32 i = 0; i < org_count / 2; i++)
+		{
+			*p16 = my_byteswap16(*p16);
+			p16++;
+		}*/
+
 		gDP.paletteCRC16[pal] = CRC_CalculatePalette(UINT64_MAX, &TMEM[256 + (pal << 4)], 16);
+
+		/*for (u32 i = 0; i < org_count / 2; i++)
+		{
+			*p16 = my_byteswap16(*p16);
+			p16++;
+		}*/
+
+		/*p32 = (u32*)&TMEM[256 + (pal << 4)];
+		for (u32 i = 0; i < org_count / 4; i++)
+		{
+			*p32 = my_byteswap32(*p32);
+			p32++;
+		}*/
+
 		pal = (pal + 1) & 0x0F;
 	}
 
@@ -787,7 +853,15 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 	if (TFH.isInited()) {
 		const u16 start = static_cast<u16>(gDP.tiles[tile].tmem) - 256; // starting location in the palettes
 		u16 *spal = reinterpret_cast<u16*>(RDRAM + gDP.textureImage.address);
-		memcpy(reinterpret_cast<u8*>(gDP.TexFilterPalette + start), spal, u32(count)<<1);
+		memcpy(reinterpret_cast<u8*>(gDP.TexFilterPalette + start), spal, u32(count)<<1);//!!!!!
+
+		int data_size = u32(count) << 1;
+		u32* p = (u32*)gDP.TexFilterPalette;
+		for (int i = 0; i < data_size / 4; i++)///!!!!!!!!!!!
+		{
+			//*p = my_byteswap32(*p);
+			p++;
+		}
 	}
 
 	gDP.changed |= CHANGED_TMEM;

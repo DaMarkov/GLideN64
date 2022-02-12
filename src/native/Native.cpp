@@ -138,6 +138,8 @@ extern "C" {
         REG.VI_STATUS;
         RDRAMSize = (word)-1;
 
+        config.textureFilter.txHiresEnable = 1;
+
         api().RomOpen(romName);
     }
 

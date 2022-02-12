@@ -1244,7 +1244,7 @@ void GraphicsDrawer::drawTexturedRect(const TexturedRectParams & _params)
 		//		&& (cache.current[0] == nullptr || cache.current[0]->format == G_IM_FMT_RGBA || cache.current[0]->format == G_IM_FMT_CI)
 		&& ((cache.current[0]->frameBufferTexture == CachedTexture::fbNone && !cache.current[0]->bHDTexture))
 		&& (cache.current[1] == nullptr || (cache.current[1]->frameBufferTexture == CachedTexture::fbNone && !cache.current[1]->bHDTexture)));
-
+	
 	const float Z = (gDP.otherMode.depthSource == G_ZS_PRIM) ? gDP.primDepth.z : 0.0f;
 	const float W = 1.0f;
 	const f32 ulx = _params.ulx;
@@ -1283,12 +1283,19 @@ void GraphicsDrawer::drawTexturedRect(const TexturedRectParams & _params)
 		offsetY = (_params.lry - _params.uly) * _params.dtdy;
 	}
 
+	if (cache.current[0]->name == ObjectHandle(58))
+		int t = 54;
+
 	if (config.generalEmulation.enableInaccurateTextureCoordinates == 0u) {
 		// Accurate texture path
 		texST[0].s0 = _FIXED2FLOAT(_params.s, 5);
 		texST[0].s1 = texST[0].s0 + offsetX;
 		texST[0].t0 = _FIXED2FLOAT(_params.t, 5);
 		texST[0].t1 = texST[0].t0 + offsetY;
+		/*texST[0].s0 = 0.0f;//!!!
+		texST[0].t0 = 0.0f;
+		texST[0].s1 = 1.0f;
+		texST[0].t1 = 1.0f;//!!!*/
 	} else {
 		// Fast texture path
 		for (u32 t = 0; t < 2; ++t) {
@@ -1389,7 +1396,7 @@ void GraphicsDrawer::drawTexturedRect(const TexturedRectParams & _params)
 	m_rect[3].bc0 = 1.0f;
 	m_rect[3].bc1 = 1.0f;
 
-
+	
 	if (bUseTexrectDrawer) {
 		if (m_bBGMode) {
 			m_texrectDrawer.addBackgroundRect();

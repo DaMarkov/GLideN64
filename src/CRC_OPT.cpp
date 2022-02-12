@@ -51,12 +51,31 @@ u64 CRC_Calculate( u64 crc, const void * buffer, u32 count )
 	return XXH3_64bits_withSeed(buffer, count, crc);
 }
 
+uint32_t my_byteswap32(uint32_t num);//!!
 u64 CRC_CalculatePalette( u64 crc, const void * buffer, u32 count )
 {
+	/*auto org_count = count;
+	if (count % 4 != 0)
+		int t = 54;
+	u32* p32 = (u32*)buffer;
+	for (u32 i = 0; i < org_count / 4; i++)
+	{
+		*p32 = my_byteswap32(*p32);
+		p32++;
+	}*/
+
 	u8 *p = (u8*) buffer;
 	while (count--) {
 		crc = XXH3_64bits_withSeed(p, 2, crc);
 		p += 8;
 	}
+
+	/*p32 = (u32*)buffer;
+	for (u32 i = 0; i < org_count / 4; i++)
+	{
+		*p32 = my_byteswap32(*p32);
+		p32++;
+	}*/
+
 	return crc;
 }

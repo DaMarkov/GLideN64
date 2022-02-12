@@ -750,8 +750,18 @@ bool TxFileStorage::get(Checksum checksum, GHQTexInfo *info)
 
 	/* find a match in storage */
 	auto itMap = _storage.find(checksum);
-	if (itMap == _storage.end())
+	if (itMap == _storage.end())//!!!
 		return false;
+	/*int r = rand() % 1000;
+	for (auto& [key, value] : _storage)
+	{
+		if (r == 0)
+		{
+			_infile.seekg(value, std::ifstream::beg);
+			return readData(*info);
+		}
+		r--;
+	}*/
 
 	if (_outfile.is_open() || !_infile.is_open())
 		if (!open(true))

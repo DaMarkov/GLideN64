@@ -88,7 +88,7 @@ void PaletteTexture::update()
 	u32 * palette = (u32*)m_pbuf;
 	u16 *src = (u16*)&TMEM[256];
 	for (int i = 0; i < 256; ++i)
-#ifdef NATIVE
+#ifdef NATIVE///!!!!
 		palette[i] = src[i * 4];
 #else
 		palette[i] = swapword(src[i * 4]);

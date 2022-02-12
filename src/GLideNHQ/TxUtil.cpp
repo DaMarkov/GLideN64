@@ -105,7 +105,7 @@ TxUtil::checksum64(uint8 *src, int width, int height, int size, int rowStride, u
 		uint32 crc32 = 0, cimax = 0;
 		switch (size & 0xff) {
 		case 1:
-			if (RiceCRC32_CI8(src, width, height, rowStride, &crc32, &cimax)) {
+			if (RiceCRC32_CI8(src, width, height, rowStride, &crc32, &cimax)) {//!!
 				crc64Ret = (uint64)RiceCRC32(palette, cimax + 1, 1, 2, 512);
 				crc64Ret <<= 32;
 				crc64Ret |= (uint64)crc32;
@@ -133,13 +133,32 @@ TxUtil::checksum64(uint8 *src, int width, int height, int size, int rowStride, u
  * BYTE* addr = (BYTE*)(gfx.RDRAM +
  *                     rdp.addr[rdp.tiles[tile].t_mem] +
  *                     (rdp.tiles[tile].ul_t * bpl) +
- *                     (((rdp.tiles[tile].ul_s<<rdp.tiles[tile].size)+1)>>1));
+ *                     (((rdp.tiles[tile].ul_s<<rdp.tiles[tile].depth)+1)>>1));
  * RiceCRC32(addr,
  *          rdp.tiles[tile].width,
  *          rdp.tiles[tile].height,
- *          (unsigned short)(rdp.tiles[tile].format << 8 | rdp.tiles[tile].size),
+ *          (unsigned short)(rdp.tiles[tile].format << 8 | rdp.tiles[tile].depth),
  *          bpl);
  */
+
+
+
+uint32_t my_byteswap32(uint32_t num)//!!
+{
+	uint32_t b0, b1, b2, b3;
+	uint32_t res;
+
+	b0 = (num & 0x000000ff) << 24u;
+	b1 = (num & 0x0000ff00) << 8u;
+	b2 = (num & 0x00ff0000) >> 8u;
+	b3 = (num & 0xff000000) >> 24u;
+
+	res = b0 | b1 | b2 | b3;
+	return res;
+}
+
+
+
 uint32
 TxUtil::RiceCRC32(const uint8* src, int width, int height, int size, int rowStride)
 {
@@ -185,6 +204,7 @@ loop1:
 			pop ebx;
 		}
 #else
+
 		int y = height - 1;
 		while (y >= 0)
 		{
@@ -193,6 +213,23 @@ loop1:
 			while (x >= 0)
 			{
 				esi = *(uint32*)(src + x);
+
+				//!!
+				/*if (depth == 2)
+				{
+					esi = (my_byteswap16((esi & 0xFFFF0000) >> 16) & 0xFFFF0000) | my_byteswap16(esi & 0x0000FFFF) & 0x0000FFFF;
+				}
+				/*else if (depth == 3)
+				{
+					//R1 G1 B1  R2 G2 B2  R3 G3 B3
+					//B1 G1 R1  B2 G2 R2  B3 G3 R3
+					//esi = (my_byteswap16((esi & 0xFFFF0000) >> 16) & 0xFFFF0000) | my_byteswap16(esi & 0x0000FFFF) & 0x0000FFFF;
+					esi = (esi & 0x00FF0000 >> 16) | (esi & 0x0000FF00) | (esi & 0x000000FF << 16);
+				}
+				else if (depth == 3 || depth == 4)*/
+				//if (size != 1)
+					esi = my_byteswap32(esi);//!!
+
 				esi ^= x;
 
 				crc32Ret = (crc32Ret << 4) + ((crc32Ret >> 28) & 15);
@@ -215,17 +252,28 @@ loop1:
 static
 uint8 CalculateMaxCI8b(const uint8* src, uint32 width, uint32 height, uint32 rowStride)
 {
-	uint8 val = 0;
+	uint32_t depth = rowStride / width;
+
+	uint8 max = 0;
 	for (uint32 y = 0; y < height; ++y) {
 		const uint8 * buf = src + rowStride * y;
-		for (uint32 x = 0; x<width; ++x) {
-			if (buf[x] > val)
-				val = buf[x];
-			if (val == 0xFF)
+		for (uint32 x = 0; x < width; ++x) {
+			uint8 val = buf[x];
+
+			if (depth == 1)//!!!
+				;
+			else if (depth == 4)
+				val = ((val & 0xF0) >> 4) | ((val & 0x0F) << 4);
+			else
+				int t = 4;//!!!!
+
+			if (val > max)
+				max = buf[x];
+			if (max == 0xFF)
 				return 0xFF;
 		}
 	}
-	return val;
+	return max;
 }
 
 static

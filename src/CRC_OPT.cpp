@@ -66,12 +66,12 @@ u64 CRC_CalculatePalette( u64 crc, const void * buffer, u32 count )
 		p32++;
 	}
 
-	/*u16* p16 = (u16*)buffer;
+	u16* p16 = (u16*)buffer;
 	for (u32 i = 0; i < org_count / 2; i++)
 	{
-		*p16 = my_byteswap16(*p16);
+		//*p16 = my_byteswap16(*p16);
 		p16++;
-	}*/
+	}
 
 	u8 *p = (u8*) buffer;
 	while (count--) {
@@ -86,12 +86,12 @@ u64 CRC_CalculatePalette( u64 crc, const void * buffer, u32 count )
 		p32++;
 	}
 
-	/*p16 = (u16*)buffer;
+	p16 = (u16*)buffer;
 	for (u32 i = 0; i < org_count / 2; i++)
 	{
-		*p16 = my_byteswap16(*p16);
+		//*p16 = my_byteswap16(*p16);
 		p16++;
-	}*/
+	}
 
 	return crc;
 }

@@ -778,37 +778,98 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 		DebugMsg(DEBUG_NORMAL | DEBUG_ERROR, "gDPLoadTLUT wrong tile tmem addr: tile[%d].tmem=%04x;\n", tile, gDP.tiles[tile].tmem);
 		return;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	u16 count = static_cast<u16>((gDP.tiles[tile].lrs - gDP.tiles[tile].uls + 1) * (gDP.tiles[tile].lrt - gDP.tiles[tile].ult + 1));
 	word address = gDP.textureImage.address + gDP.tiles[tile].ult * gDP.textureImage.bpl + (gDP.tiles[tile].uls << gDP.textureImage.size >> 1);
-	u16 pal = static_cast<u16>((gDP.tiles[tile].tmem - 256) >> 4);
-	u16 * dest = reinterpret_cast<u16*>(TMEM);
+	u16* dest = reinterpret_cast<u16*>(TMEM);
 	u32 destIdx = gDP.tiles[tile].tmem << 2;
 
-
-
-	u32 org_count = 16;
-
-	u32* p32 = (u32*)TMEM;
-	for (u32 k = 0; k < 512 * sizeof(u64) / sizeof(u32); k++)
-	{
-		//*p32 = my_byteswap32(*p32);
-		p32++;
-	}
 
 
 	int i = 0;
 	while (i < count) {
 		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
 #ifdef NATIVE
-			//dest[(destIdx | 0x0400) & 0x07FF] = *reinterpret_cast<u16*>(RDRAM + (address ^ 2));
+			//dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address)));
 			dest[(destIdx) & 0x07FF] = *reinterpret_cast<u16*>(RDRAM + (address));
 #else
 			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ 2)));
 #endif
-			dest[(destIdx) & 0x07FF] = 0xFFFF;//!!!
+			//dest[(destIdx) & 0x07FF] = 0xFFFF;//!!!
+
+			if (j & 1)//!!!
+			{
+				u16 first = dest[(destIdx - 4) & 0x07FF];
+				u16 second = dest[(destIdx) & 0x07FF];
+
+				u32 data = (first << 16) | second;
+				data = my_byteswap32(data);
+
+				//dest[(destIdx - 4) & 0x07FF] = (data & 0xFFFF0000) >> 16;
+				//dest[(destIdx) & 0x07FF] = data & 0x0000FFFF;
+			}
+
 			address += 2;
 			destIdx += 4;
 		}
+	}
+
+
+
+
+
+
+
+
+
+	u16 pal = static_cast<u16>((gDP.tiles[tile].tmem - 256) >> 4);
+
+
+
+
+	u32 org_count = 16;
+
+	u64* p64 = (u64*)TMEM;
+	for (u32 k = 0; k < 512 * sizeof(u64) / sizeof(u64); k++)
+	{
+		//*p64 = my_byteswap64(*p64);
+		p64++;
+	}
+	u32* p32 = (u32*)TMEM;
+	for (u32 k = 0; k < 512 * sizeof(u64) / sizeof(u32); k++)
+	{
+		//*p32 = my_byteswap32(*p32);
+		p32++;
+	}
+	u16* p16 = (u16*)TMEM;
+	for (u32 k = 0; k < 512 * sizeof(u64) / sizeof(u16); k++)
+	{
+		//*p16 = my_byteswap16(*p16);
+		p16++;
+	}
+
+
+	i = 0;
+	while (i < count) {
+		
+
+		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
+		}
+
 
 		
 		u32* p32 = (u32*)&TMEM[256 + (pal << 4)];

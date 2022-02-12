@@ -52,16 +52,25 @@ u64 CRC_Calculate( u64 crc, const void * buffer, u32 count )
 }
 
 uint32_t my_byteswap32(uint32_t num);//!!
+uint16_t my_byteswap16(uint16_t num);//!!
 u64 CRC_CalculatePalette( u64 crc, const void * buffer, u32 count )
 {
-	/*auto org_count = count;
+	auto org_count = count;
 	if (count % 4 != 0)
 		int t = 54;
+
 	u32* p32 = (u32*)buffer;
 	for (u32 i = 0; i < org_count / 4; i++)
 	{
 		*p32 = my_byteswap32(*p32);
 		p32++;
+	}
+
+	/*u16* p16 = (u16*)buffer;
+	for (u32 i = 0; i < org_count / 2; i++)
+	{
+		*p16 = my_byteswap16(*p16);
+		p16++;
 	}*/
 
 	u8 *p = (u8*) buffer;
@@ -70,11 +79,18 @@ u64 CRC_CalculatePalette( u64 crc, const void * buffer, u32 count )
 		p += 8;
 	}
 
-	/*p32 = (u32*)buffer;
+	p32 = (u32*)buffer;
 	for (u32 i = 0; i < org_count / 4; i++)
 	{
 		*p32 = my_byteswap32(*p32);
 		p32++;
+	}
+
+	/*p16 = (u16*)buffer;
+	for (u32 i = 0; i < org_count / 2; i++)
+	{
+		*p16 = my_byteswap16(*p16);
+		p16++;
 	}*/
 
 	return crc;

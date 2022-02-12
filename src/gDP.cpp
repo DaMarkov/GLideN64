@@ -788,7 +788,12 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 
 	u32 org_count = 16;
 
-	
+	u32* p32 = (u32*)TMEM;
+	for (u32 k = 0; k < 512 * sizeof(u64) / sizeof(u32); k++)
+	{
+		//*p32 = my_byteswap32(*p32);
+		p32++;
+	}
 
 
 	int i = 0;
@@ -809,7 +814,7 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 		u32* p32 = (u32*)&TMEM[256 + (pal << 4)];
 		for (u32 k = 0; k < org_count / 4; k++)
 		{
-			*p32 = my_byteswap32(*p32);
+			//*p32 = my_byteswap32(*p32);
 			p32++;
 		}
 

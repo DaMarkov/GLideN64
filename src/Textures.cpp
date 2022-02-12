@@ -817,6 +817,8 @@ void TextureCache::_loadBackground(CachedTexture *pTexture)
 		glType = loadParams.glType16;
 	}
 
+	
+
 	bpl = gSP.bgImage.width << gSP.bgImage.size >> 1;
 	numBytes = bpl * gSP.bgImage.height;
 	pSwapped = (u8*)malloc(numBytes);
@@ -1382,6 +1384,8 @@ void TextureCache::_loadAccurate(u32 _tile, CachedTexture *_pTexture)
 		force32bitFormat = _pTexture->max_level > 0;
 	}
 
+	
+
 	u32 sizeShift = 1;
 	{
 		const TextureLoadParameters & loadParams =
@@ -1928,6 +1932,7 @@ void TextureCache::update(u32 _t)
 
 	pCurrent->offsetS = 0.0f;
 	pCurrent->offsetT = 0.0f;
+
 
 	if (config.generalEmulation.enableInaccurateTextureCoordinates) {
 		_loadFast(_t, pCurrent);

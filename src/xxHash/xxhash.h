@@ -1632,7 +1632,8 @@ static xxh_u64 XXH_read64(const void* ptr)
 static xxh_u64 XXH_read64(const void* memPtr)
 {
     xxh_u64 val;
-    memcpy(&val, memPtr, sizeof(val));
+    memcpy(&val, memPtr, sizeof(val));///!!!
+    //xxh_u64 val = *(u64*)memPtr;//!!
     return val;
 }
 
@@ -2774,8 +2775,8 @@ XXH3_len_1to3_64b(const xxh_u8* input, size_t len, const xxh_u8* secret, XXH64_h
     {   xxh_u8  const c1 = input[0];
         xxh_u8  const c2 = input[len >> 1];
         xxh_u8  const c3 = input[len - 1];
-        xxh_u32 const combined = ((xxh_u32)c1 << 16) | ((xxh_u32)c2  << 24) | ((xxh_u32)c3 <<  0) | ((xxh_u32)len << 8);
-        //xxh_u32 const combined = ((xxh_u32)c2 << 16) | ((xxh_u32)c1 << 24) | ((xxh_u32)c1 << 0) | ((xxh_u32)len << 8);///!!!!!!!!!!
+        xxh_u32 const combined = ((xxh_u32)c1 << 16) | ((xxh_u32)c2  << 24)
+                               | ((xxh_u32)c3 <<  0) | ((xxh_u32)len << 8);
         xxh_u64 const bitflip = (XXH_readLE32(secret) ^ XXH_readLE32(secret+4)) + seed;
         xxh_u64 const keyed = (xxh_u64)combined ^ bitflip;
         return XXH64_avalanche(keyed);

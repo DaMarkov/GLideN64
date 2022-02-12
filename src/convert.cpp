@@ -104,7 +104,7 @@ void UnswapCopyWrap(const u8 *src, word srcIdx, u8 *dest, word destIdx, word des
 {
 #ifdef NATIVE
 	// copy leading bytes
-	word leadingBytes = srcIdx & 3;
+	/*word leadingBytes = srcIdx & 3;
 	if(leadingBytes != 0)
 	{
 		leadingBytes = 4 - leadingBytes;
@@ -140,6 +140,45 @@ void UnswapCopyWrap(const u8 *src, word srcIdx, u8 *dest, word destIdx, word des
 			dest[destIdx & destMask] = src[srcIdx];
 			++destIdx;
 			++srcIdx;
+		}
+	}*/
+
+
+	// copy leading bytes
+	word leadingBytes = srcIdx & 3;
+	if (leadingBytes != 0) {
+		leadingBytes = 4 - leadingBytes;
+		if (leadingBytes > numBytes)
+			leadingBytes = numBytes;
+		numBytes -= leadingBytes;
+
+		srcIdx ^= 3;
+		for (u32 i = 0; i < leadingBytes; i++) {
+			dest[destIdx & destMask] = src[srcIdx];
+			++destIdx;
+			--srcIdx;
+		}
+		srcIdx += 5;
+	}
+
+	// copy dwords
+	int numDWords = numBytes >> 2;
+	while (numDWords--) {
+		dest[(destIdx + 3) & destMask] = src[srcIdx++];
+		dest[(destIdx + 2) & destMask] = src[srcIdx++];
+		dest[(destIdx + 1) & destMask] = src[srcIdx++];
+		dest[(destIdx + 0) & destMask] = src[srcIdx++];
+		destIdx += 4;
+	}
+
+	// copy trailing bytes
+	int trailingBytes = numBytes & 3;
+	if (trailingBytes) {
+		srcIdx ^= 3;
+		for (int i = 0; i < trailingBytes; i++) {
+			dest[destIdx & destMask] = src[srcIdx];
+			++destIdx;
+			--srcIdx;
 		}
 	}
 #else

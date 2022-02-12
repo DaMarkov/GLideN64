@@ -484,8 +484,10 @@ void gDPLoadTile32b(u32 uls, u32 ult, u32 lrs, u32 lrt)
 			c = src[addr + s + i];
 			ptr = ((tline + i) ^ xorval) & 0x3ff;
 #ifdef NATIVE
-			tmem16[ptr | 0x400] = c >> 16;
-			tmem16[ptr] = c & 0xffff;
+			//tmem16[ptr | 0x400] = c >> 16;
+			//tmem16[ptr] = c & 0xffff;
+			tmem16[ptr] = c >> 16;
+			tmem16[ptr | 0x400] = c & 0xffff;
 #else
 			tmem16[ptr] = c >> 16;
 			tmem16[ptr | 0x400] = c & 0xffff;
@@ -624,12 +626,20 @@ void gDPLoadBlock32(u32 uls,u32 lrs, u32 dxt)
 			ptr = ((tb + i) ^ t) & 0x3ff;
 			c = src[addr + i];
 #ifdef NATIVE
-			tmem16[ptr | 0x400] = c >> 16;
+			/*tmem16[ptr | 0x400] = c >> 16;
 			tmem16[ptr] = c & 0xffff;
 			ptr = ((tb + i + 1) ^ t) & 0x3ff;
 			c = src[addr + i + 1];
 			tmem16[ptr | 0x400] = c >> 16;
-			tmem16[ptr] = c & 0xffff;
+			tmem16[ptr] = c & 0xffff;*/
+
+			tmem16[ptr] = c >> 16;
+			tmem16[ptr | 0x400] = c & 0xffff;
+			ptr = ((tb + i + 1) ^ t) & 0x3ff;
+			c = src[addr + i + 1];
+			tmem16[ptr] = c >> 16;
+			tmem16[ptr | 0x400] = c & 0xffff;
+
 #else
 			tmem16[ptr] = c >> 16;
 			tmem16[ptr | 0x400] = c & 0xffff;
@@ -646,8 +656,10 @@ void gDPLoadBlock32(u32 uls,u32 lrs, u32 dxt)
 			ptr = ((tb + i) ^ 1) & 0x3ff;
 			c = src[addr + i];
 #ifdef NATIVE
-			tmem16[ptr | 0x400] = c >> 16;
-			tmem16[ptr] = c & 0xffff;
+			//tmem16[ptr | 0x400] = c >> 16;
+			//tmem16[ptr] = c & 0xffff;
+			tmem16[ptr] = c >> 16;
+			tmem16[ptr | 0x400] = c & 0xffff;
 #else
 			tmem16[ptr] = c >> 16;
 			tmem16[ptr | 0x400] = c & 0xffff;
@@ -781,23 +793,10 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 	u16 count = static_cast<u16>((gDP.tiles[tile].lrs - gDP.tiles[tile].uls + 1) * (gDP.tiles[tile].lrt - gDP.tiles[tile].ult + 1));
 	word address = gDP.textureImage.address + gDP.tiles[tile].ult * gDP.textureImage.bpl + (gDP.tiles[tile].uls << gDP.textureImage.size >> 1);
 	u16* dest = reinterpret_cast<u16*>(TMEM);
 	u32 destIdx = gDP.tiles[tile].tmem << 2;
-
 
 
 	int i = 0;
@@ -805,7 +804,9 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
 #ifdef NATIVE
 			//dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address)));
-			dest[(destIdx) & 0x07FF] = *reinterpret_cast<u16*>(RDRAM + (address));
+			//dest[(destIdx) & 0x07FF] = *reinterpret_cast<u16*>(RDRAM + (address));
+
+			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ 2)));
 #else
 			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ 2)));
 #endif
@@ -817,7 +818,7 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 				u16 second = dest[(destIdx) & 0x07FF];
 
 				u32 data = (first << 16) | second;
-				data = my_byteswap32(data);
+				//data = my_byteswap32(data);
 
 				//dest[(destIdx - 4) & 0x07FF] = (data & 0xFFFF0000) >> 16;
 				//dest[(destIdx) & 0x07FF] = data & 0x0000FFFF;
@@ -827,8 +828,6 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 			destIdx += 4;
 		}
 	}
-
-
 
 
 
@@ -914,7 +913,35 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 		pal = (pal + 1) & 0x0F;
 	}
 
+
+	//16 x u64
+	for (int k = 0; k < 16 ; k++)
+	{
+		//gDP.paletteCRC16[k] = my_byteswap64(gDP.paletteCRC16[k]);
+	}
+
+	//u32* p = (u32*)gDP.paletteCRC16;
+	for (int k = 0; k < 16 * 2; k++)
+	{
+		//*p = my_byteswap32(*p);
+		//p++;
+	}
+
+
+	u16* p = (u16*)gDP.paletteCRC16;
+	for (int k = 0; k < 16 * 4; k++)
+	{
+		//*p = my_byteswap16(*p);
+		p++;
+	}
+
 	gDP.paletteCRC256 = CRC_Calculate(UINT64_MAX, gDP.paletteCRC16, sizeof(u64) * 16);
+
+
+
+
+
+
 
 	if (TFH.isInited()) {
 		const u16 start = static_cast<u16>(gDP.tiles[tile].tmem) - 256; // starting location in the palettes
@@ -922,13 +949,60 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 		memcpy(reinterpret_cast<u8*>(gDP.TexFilterPalette + start), spal, u32(count)<<1);//!!!!!
 
 		int data_size = u32(count) << 1;
-		u32* p = (u32*)gDP.TexFilterPalette;
+
+		//u64* p = (u64*)gDP.TexFilterPalette;
+		for (int i = 0; i < data_size / 8; i++)///!!!!!!!!!!!
+		{
+			//*p = my_byteswap64(*p);
+			p++;
+		}
+
+		//u32* p = (u32*)gDP.TexFilterPalette;
 		for (int i = 0; i < data_size / 4; i++)///!!!!!!!!!!!
 		{
 			//*p = my_byteswap32(*p);
 			p++;
 		}
+
+		//u16* p = (u16*)gDP.TexFilterPalette;
+		for (int i = 0; i < data_size / 2; i++)///!!!!!!!!!!!
+		{
+			//*p = my_byteswap16(*p);
+			p++;
+		}
+
+		u8* p8 = (u8*)gDP.TexFilterPalette;
+		for (int i = 0; i < data_size; i++)///!!!!!!!!!!!
+		{
+			//u8 v = *p8;
+			//*p8 = (v >> 4) | (v << 4);
+			//*p8 = 0;
+			p8++;
+		}
 	}
+
+
+
+
+
+
+
+	count = static_cast<u16>((gDP.tiles[tile].lrs - gDP.tiles[tile].uls + 1) * (gDP.tiles[tile].lrt - gDP.tiles[tile].ult + 1));
+	address = gDP.textureImage.address + gDP.tiles[tile].ult * gDP.textureImage.bpl + (gDP.tiles[tile].uls << gDP.textureImage.size >> 1);
+	dest = reinterpret_cast<u16*>(TMEM);
+	destIdx = gDP.tiles[tile].tmem << 2;
+
+
+	i = 0;
+	while (i < count) {
+		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
+			//dest[(destIdx) & 0x07FF] = 0xFFFF;//!!!
+
+			address += 2;
+			destIdx += 4;
+		}
+	}
+
 
 	gDP.changed |= CHANGED_TMEM;
 

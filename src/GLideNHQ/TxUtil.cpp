@@ -255,7 +255,7 @@ uint8 CalculateMaxCI8b(const uint8* src, uint32 width, uint32 height, uint32 row
 	uint32_t depth = rowStride / width;
 
 	uint8 max = 0;
-	for (uint32 y = 0; y < height; ++y) {
+	/*for (uint32 y = 0; y < height; ++y) {
 		const uint8 * buf = src + rowStride * y;
 		for (uint32 x = 0; x < width; ++x) {
 			uint8 val = buf[x];
@@ -270,6 +270,16 @@ uint8 CalculateMaxCI8b(const uint8* src, uint32 width, uint32 height, uint32 row
 			if (val > max)
 				max = buf[x];
 			if (max == 0xFF)
+				return 0xFF;
+		}
+	}*/
+	uint8 val = 0;
+	for (uint32 y = 0; y < height; ++y) {
+		const uint8* buf = src + rowStride * y;
+		for (uint32 x = 0; x < width; ++x) {
+			if (buf[x] > val)
+				val = buf[x];
+			if (val == 0xFF)
 				return 0xFF;
 		}
 	}
